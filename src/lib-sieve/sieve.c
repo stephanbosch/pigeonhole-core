@@ -941,6 +941,29 @@ int sieve_trace_log_create
 	return 0;
 }
 
+static const char *sieve_trace_log_escape_label(const char *label)
+{
+	const char *p, *plast;
+	string_t *str;
+
+	plast = label;
+	if ( (p=strchr(label, '/')) == NULL )
+		return label;
+
+	str = t_str_new(strlen(label));
+	do {
+		str_append_n(str, plast, p - plast);
+		str_append_c(str, '.');
+
+		p++;
+		plast = p;
+		p = strchr(p, '/');
+	} while ( p != NULL );
+
+	str_append(str, plast);
+	return str_c(str);
+}
+
 int sieve_trace_log_create_dir
 (struct sieve_instance *svinst, const char *dir,
 	const char *label, struct sieve_trace_log **trace_log_r)
@@ -963,6 +986,7 @@ int sieve_trace_log_create_dir
 
 	counter++;
 	if ( label != NULL ) {
+		label = sieve_trace_log_escape_label(label);
 		prefix = t_strdup_printf("%s/%s.%s.%s.%u.trace",
 			dir, label, timestamp, my_pid, counter);
 	} else {
